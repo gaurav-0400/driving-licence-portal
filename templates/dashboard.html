@@ -1,0 +1,217 @@
+{% extends 'admin_base.html' %}
+
+{% block page_title %}Admin Dashboard{% endblock %}
+{% block page_subtitle %}Manage customer links, submissions and payments{% endblock %}
+
+{% block admin_content %}
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card-blue p-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon bg-primary"><i class="bi bi-people-fill"></i></div>
+                <div>
+                    <div class="small text-muted">Total Customers</div>
+                    <div class="stat-number">{{ total_customers }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card-green p-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon bg-success"><i class="bi bi-check-lg"></i></div>
+                <div>
+                    <div class="small text-muted">Submitted</div>
+                    <div class="stat-number">{{ submitted_count }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card-amber p-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon bg-warning"><i class="bi bi-clock-fill"></i></div>
+                <div>
+                    <div class="small text-muted">Pending</div>
+                    <div class="stat-number">{{ pending }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card-purple p-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#6d28d9;"><i class="bi bi-currency-rupee"></i></div>
+                <div>
+                    <div class="small text-muted">Total Revenue</div>
+                    <div class="stat-number">₹{{ total_revenue }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card p-4 mb-4">
+    <h5 class="fw-bold mb-3">
+        <i class="bi bi-send-fill text-primary me-2"></i>Generate Customer Link
+    </h5>
+    <form method="post" action="{% url 'create_link' %}" class="row g-2 align-items-end mb-3">
+        {% csrf_token %}
+        <input type="hidden" name="source" value="dashboard">
+        <div class="col-md-3">
+            <label class="form-label small text-muted mb-1">Discount (%)</label>
+            <input type="number" name="discount" class="form-control" min="0" max="100"
+                   value="{{ settings_obj.default_discount_percent }}" required>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-outline-primary w-100">
+                <i class="bi bi-plus-circle me-1"></i>Generate New Link
+            </button>
+        </div>
+    </form>
+
+    <label class="form-label small text-muted">Application Link (Share with Customer)</label>
+    <div class="input-group">
+        <input type="text" id="dashboardCustomerLink" class="form-control"
+               value="{{ generated_url|default:'Click Generate New Link to create a customer link' }}" readonly>
+        <button type="button" class="btn btn-primary" onclick="copyDashboardLink()">
+            <i class="bi bi-clipboard me-1"></i>Copy Link
+        </button>
+    </div>
+</div>
+
+<div class="card p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">
+            <i class="bi bi-list-ul text-primary me-2"></i>Recent Applications
+        </h5>
+        <a href="{% url 'customers_list' %}" class="text-decoration-none fw-semibold">
+            View All <i class="bi bi-arrow-right"></i>
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Application No.</th>
+                    <th>DOB</th>
+                    <th>State</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in customers %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td class="fw-semibold">{{ customer.full_name|default:"—" }}</td>
+                    <td>{{ customer.application_number }}</td>
+                    <td>{{ customer.date_of_birth|date:"d-m-Y" }}</td>
+                    <td>{{ customer.state }}</td>
+                    <td>₹{{ customer.final_amount }}</td>
+                    <td>
+                        <span class="status-pill status-{{ customer.payment_status }}">
+                            {{ customer.get_payment_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'customer_detail' customer.pk %}" class="btn btn-sm btn-outline-primary" title="View Details">
+                            <i class="bi bi-eye-fill"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-4">No applications submitted yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card p-4 h-100 text-center">
+            <h6 class="fw-bold mb-3"><i class="bi bi-qr-code text-primary me-1"></i>Payment QR & Cashfree</h6>
+            {% if settings_obj.payment_qr %}
+                <img src="{{ settings_obj.payment_qr.url }}" alt="Payment QR" class="img-fluid mx-auto mb-3" style="max-height:140px;">
+                <a href="{{ settings_obj.payment_qr.url }}" download class="btn btn-primary btn-sm">
+                    <i class="bi bi-download me-1"></i>Download QR
+                </a>
+            {% else %}
+                <div class="py-3 text-muted small">
+                    <i class="bi bi-qr-code-scan fs-1 d-block mb-2 text-primary"></i>
+                    Cashfree Checkout handles live UPI QR &amp; UPI ID automatically.
+                    {% if settings_obj.upi_id %}
+                        <div class="mt-2 fw-semibold text-dark">UPI: {{ settings_obj.upi_id }}</div>
+                    {% endif %}
+                </div>
+                <a href="{% url 'portal_settings' %}" class="btn btn-outline-primary btn-sm mt-auto">
+                    Upload Fallback QR
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card p-4 h-100">
+            <h6 class="fw-bold mb-3"><i class="bi bi-gear-fill text-primary me-1"></i>Quick Settings</h6>
+            <form method="post" action="{% url 'quick_settings_update' %}">
+                {% csrf_token %}
+                <div class="mb-2">
+                    <label class="form-label small text-muted mb-1">Default Price (₹)</label>
+                    <input type="number" name="default_price" class="form-control" min="1"
+                           value="{{ settings_obj.default_price }}" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-muted mb-1">Discount (%)</label>
+                    <input type="number" name="default_discount_percent" class="form-control" min="0" max="100"
+                           value="{{ settings_obj.default_discount_percent }}" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Update Settings</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card p-4 h-100">
+            <h6 class="fw-bold mb-3"><i class="bi bi-info-circle-fill text-primary me-1"></i>System Info</h6>
+            <div class="mb-2">
+                <div class="small text-muted">Total Submissions</div>
+                <div class="fw-bold fs-5">{{ submitted_count }}</div>
+            </div>
+            <div class="mb-2">
+                <div class="small text-muted">Paid Amount</div>
+                <div class="fw-bold fs-5">₹{{ total_revenue }}</div>
+            </div>
+            <div class="mb-2">
+                <div class="small text-muted">Cashfree Mode</div>
+                {% if cashfree_configured %}
+                    <span class="badge bg-success">{{ cashfree_env|title }} Connected</span>
+                {% else %}
+                    <span class="badge bg-warning text-dark">Credentials Not Set (.env)</span>
+                {% endif %}
+            </div>
+            <div>
+                <div class="small text-muted">Last Updated</div>
+                <div class="small fw-semibold">{{ settings_obj.updated_at|date:"d M Y, h:i A" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyDashboardLink() {
+    const el = document.getElementById("dashboardCustomerLink");
+    if (!el || !el.value.startsWith("http")) return;
+    navigator.clipboard.writeText(el.value);
+}
+</script>
+{% endblock %}

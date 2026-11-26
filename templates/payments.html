@@ -1,0 +1,66 @@
+{% extends 'admin_base.html' %}
+
+{% block page_title %}Payments{% endblock %}
+{% block page_subtitle %}Cashfree transactions and revenue summary{% endblock %}
+
+{% block admin_content %}
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card-purple p-3">
+            <div class="small text-muted">Total Revenue</div>
+            <div class="stat-number">₹{{ total_revenue }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card-green p-3">
+            <div class="small text-muted">Paid / Verified</div>
+            <div class="stat-number">{{ paid_count }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card-amber p-3">
+            <div class="small text-muted">Pending</div>
+            <div class="stat-number">{{ pending_count }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Customer</th>
+                    <th>Application No.</th>
+                    <th>Order ID</th>
+                    <th>Payment ID</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Paid At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in customers %}
+                <tr>
+                    <td class="fw-semibold">{{ customer.full_name|default:"—" }}</td>
+                    <td>{{ customer.application_number }}</td>
+                    <td class="small">{{ customer.cashfree_order_id|default:"—" }}</td>
+                    <td class="small">{{ customer.cashfree_payment_id|default:"—" }}</td>
+                    <td>₹{{ customer.final_amount }}</td>
+                    <td>
+                        <span class="status-pill status-{{ customer.payment_status }}">
+                            {{ customer.get_payment_status_display }}
+                        </span>
+                    </td>
+                    <td class="small">{{ customer.paid_at|date:"d M Y, h:i A"|default:"—" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">No payment records yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

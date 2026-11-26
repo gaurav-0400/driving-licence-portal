@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+
+{% block title %}Customer Registration - Driving Licence Portal{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card overflow-hidden">
+                <div class="portal-banner p-4 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="fs-1"><i class="bi bi-car-front-fill"></i></div>
+                        <div>
+                            <h4 class="fw-bold mb-0">Driving Licence Portal</h4>
+                            <small class="text-white-50">Apply for Driving Licence</small>
+                        </div>
+                    </div>
+                    <div class="text-end d-none sm-block d-sm-block">
+                        <span class="fst-italic fw-semibold">Your Safety, Our Priority</span>
+                    </div>
+                </div>
+
+                <div class="bg-primary text-white px-4 py-2 fw-semibold">
+                    <i class="bi bi-person-fill me-2"></i>Customer Registration Form
+                </div>
+
+                <div class="p-4">
+                    {% if link_invalid %}
+                        <div class="alert alert-danger mb-0">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error_message }}
+                        </div>
+
+                    {% elif submitted %}
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            <strong>Application Submitted &amp; Paid!</strong> Your application is recorded.
+                        </div>
+                        <ul class="list-group mb-3">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Full Name</span><strong>{{ customer.full_name }}</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Application Number</span><strong>{{ customer.application_number }}</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>State</span><strong>{{ customer.state }}</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Default Amount</span><span>₹{{ customer.base_price }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Discount ({{ customer.discount }}%)</span>
+                                <span class="text-success">-₹{{ customer.discount_amount }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Total Paid</span><strong>₹{{ customer.final_amount }}</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Payment Status</span>
+                                <span class="status-pill status-{{ customer.payment_status }}">
+                                    {{ customer.get_payment_status_display }}
+                                </span>
+                            </li>
+                        </ul>
+
+                    {% elif checkout_ready %}
+                        <div class="alert alert-info">
+                            <i class="bi bi-shield-check me-2"></i>
+                            Details saved for <strong>{{ customer.full_name }}</strong> ({{ customer.application_number }}).
+                            Complete your payment below.
+                        </div>
+
+                        <div class="card p-3 mb-4 bg-light">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-currency-rupee me-1"></i>Payment Summary</h6>
+                            <div class="row text-center g-2">
+                                <div class="col-4">
+                                    <div class="small text-muted">Default Amount</div>
+                                    <div class="fs-4 fw-bold text-primary">₹{{ customer.base_price }}</div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="small text-muted">Discount</div>
+                                    <div class="fs-5 fw-semibold">{{ customer.discount }}% (-₹{{ customer.discount_amount }})</div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="small text-muted">Total Payable</div>
+                                    <div class="fs-4 fw-bold text-success">₹{{ customer.final_amount }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if payment_error %}
+                            <div class="alert alert-warning">
+                                <strong>Payment Notice:</strong> {{ payment_error }}
+                            </div>
+                        {% endif %}
+
+                        {% if payment_session_id %}
+                            <div class="text-center mb-3">
+                                <button type="button" id="cashfreePayBtn" class="btn btn-primary btn-lg px-5">
+                                    <i class="bi bi-qr-code-scan me-2"></i>Pay ₹{{ customer.final_amount }} (UPI / QR / Card)
+                                </button>
+                                <p class="small text-muted mt-2 mb-0">
+                                    Opens Cashfree Embedded Checkout with UPI QR Scanner, UPI ID, and Cards.
+                                </p>
+                            </div>
+                        {% endif %}
+
+                    {% else %}
+                        <div class="alert alert-primary bg-opacity-10 border-primary border-opacity-25">
+                            <i class="bi bi-info-circle-fill me-2"></i>
+                            Please fill in the details below to proceed with your application.
+                        </div>
+
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                Please fix the highlighted errors below and try again.
+                            </div>
+                        {% endif %}
+
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold" for="{{ form.full_name.id_for_label }}">
+                                        Name <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.full_name }}
+                                    {% for error in form.full_name.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold" for="{{ form.phone.id_for_label }}">
+                                        Mobile Number <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.phone }}
+                                    {% for error in form.phone.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold" for="{{ form.application_number.id_for_label }}">
+                                        Application Number <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.application_number }}
+                                    {% for error in form.application_number.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold" for="{{ form.date_of_birth.id_for_label }}">
+                                        Date of Birth <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.date_of_birth }}
+                                    {% for error in form.date_of_birth.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold" for="{{ form.state.id_for_label }}">
+                                        State <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.state }}
+                                    {% for error in form.state.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold" for="{{ form.rto_password.id_for_label }}">
+                                        Password (RTO Login) <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        {{ form.rto_password }}
+                                        <button type="button" class="btn btn-outline-secondary" onclick="toggleRtoPassword()" aria-label="Toggle password">
+                                            <i class="bi bi-eye" id="rtoEyeIcon"></i>
+                                        </button>
+                                    </div>
+                                    {% for error in form.rto_password.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">
+                                        Profile Picture <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="d-flex align-items-center gap-3 p-3 border rounded-3 bg-light">
+                                        <div class="avatar-preview" id="photoPreviewBox">
+                                            <i class="bi bi-person-fill fs-1 text-secondary"></i>
+                                        </div>
+                                        <div>
+                                            {{ form.profile_picture }}
+                                            <label for="id_profile_picture" class="btn btn-primary btn-sm mb-1" style="cursor:pointer;">
+                                                Choose Photo
+                                            </label>
+                                            <div class="small text-muted">JPG, PNG (Max 2MB)</div>
+                                            {% for error in form.profile_picture.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card p-3 mt-4 mb-4 bg-light">
+                                <h6 class="fw-bold mb-3"><i class="bi bi-currency-rupee me-1"></i>Payment Details</h6>
+                                <div class="row text-center g-2 align-items-center">
+                                    <div class="col-4">
+                                        <div class="small text-muted">Default Amount</div>
+                                        <div class="fs-4 fw-bold text-primary">₹{{ base_price }}</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="small text-muted">Discount</div>
+                                        <div class="fs-5 fw-semibold">{{ discount }}% (-₹{{ discount_amount }})</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="small text-muted">Total Amount to Pay</div>
+                                        <div class="fs-4 fw-bold text-success">₹{{ final_amount }}</div>
+                                    </div>
+                                </div>
+                                <hr class="my-3">
+                                <div class="d-flex align-items-center justify-content-center gap-2 small text-muted">
+                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                    <span>Cashfree Embedded Checkout supports UPI QR Scanner, UPI ID, and automatic verification.</span>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-lg w-100">
+                                <i class="bi bi-send-fill me-2"></i>
+                                {% if final_amount == 0 %}
+                                    Submit Application
+                                {% else %}
+                                    Submit &amp; Pay ₹{{ final_amount }}
+                                {% endif %}
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleRtoPassword() {
+    const input = document.getElementById("id_rto_password");
+    const icon = document.getElementById("rtoEyeIcon");
+    if (!input) return;
+    if (input.type === "password") {
+        input.type = "text";
+        icon.className = "bi bi-eye-slash";
+    } else {
+        input.type = "password";
+        icon.className = "bi bi-eye";
+    }
+}
+
+const photoInput = document.getElementById("id_profile_picture");
+if (photoInput) {
+    photoInput.addEventListener("change", function (event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const previewBox = document.getElementById("photoPreviewBox");
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            previewBox.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+</script>
+
+{% if checkout_ready and payment_session_id %}
+<script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+<script>
+(function () {
+    const cashfree = Cashfree({ mode: "{{ cashfree_env|default:'sandbox' }}" });
+    function openCashfreeCheckout() {
+        cashfree.checkout({
+            paymentSessionId: "{{ payment_session_id }}",
+            redirectTarget: "_modal"
+        }).then(function (result) {
+            if (result.error) {
+                console.error("Cashfree checkout error:", result.error);
+            }
+            if (result.paymentDetails) {
+                window.location.href = "{% url 'payment_return' %}?order_id={{ customer.cashfree_order_id }}";
+            }
+        });
+    }
+    const payBtn = document.getElementById("cashfreePayBtn");
+    if (payBtn) {
+        payBtn.addEventListener("click", openCashfreeCheckout);
+        openCashfreeCheckout();
+    }
+})();
+</script>
+{% endif %}
+{% endblock %}

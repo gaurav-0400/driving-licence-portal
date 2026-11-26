@@ -1,0 +1,42 @@
+{% extends 'admin_base.html' %}
+
+{% block page_title %}Link Created{% endblock %}
+{% block page_subtitle %}Share this private registration link with your customer{% endblock %}
+
+{% block admin_content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card p-4">
+            <h4 class="text-success fw-bold mb-2">
+                <i class="bi bi-check-circle-fill me-2"></i>Customer Link Created!
+            </h4>
+            <p class="text-muted">Copy this link and send it to your customer. It expires after 48 hours.</p>
+
+            <div class="input-group mb-3">
+                <input type="text" id="customerLink" class="form-control" value="{{ customer_url }}" readonly>
+                <button class="btn btn-primary" type="button"
+                        onclick="navigator.clipboard.writeText(document.getElementById('customerLink').value)">
+                    <i class="bi bi-clipboard me-1"></i>Copy Link
+                </button>
+            </div>
+
+            <div class="alert alert-light border mb-3">
+                <div class="d-flex justify-content-between">
+                    <span>Base Price:</span><strong>₹{{ link.base_price }}</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Discount:</span><strong>{{ link.discount }}% (-₹{{ discount_amount }})</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Customer Payable:</span><strong class="text-success">₹{{ final_amount }}</strong>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <a href="{% url 'dashboard' %}" class="btn btn-outline-primary">Back to Dashboard</a>
+                <a href="{% url 'create_link' %}" class="btn btn-primary">Create Another Link</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

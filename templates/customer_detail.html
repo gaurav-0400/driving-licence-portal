@@ -1,0 +1,80 @@
+{% extends 'admin_base.html' %}
+
+{% block page_title %}Customer Details{% endblock %}
+{% block page_subtitle %}Application {{ customer.application_number }}{% endblock %}
+
+{% block admin_content %}
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card p-4 text-center">
+            {% if customer.profile_picture %}
+                <img src="{{ customer.profile_picture.url }}" alt="{{ customer.full_name }}"
+                     class="rounded-circle mx-auto mb-3 border" style="width:140px;height:140px;object-fit:cover;">
+            {% endif %}
+            <h5 class="fw-bold mb-1">{{ customer.full_name|default:"—" }}</h5>
+            <div class="text-muted small mb-3">{{ customer.application_number }}</div>
+            <span class="status-pill status-{{ customer.payment_status }}">
+                {{ customer.get_payment_status_display }}
+            </span>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card p-4 mb-4">
+            <h6 class="fw-bold mb-3">Application &amp; Payment Info</h6>
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <div class="small text-muted">Mobile Number</div>
+                    <div class="fw-semibold">{{ customer.phone|default:"—" }}</div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="small text-muted">Date of Birth</div>
+                    <div class="fw-semibold">{{ customer.date_of_birth|date:"d-m-Y" }}</div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="small text-muted">State</div>
+                    <div class="fw-semibold">{{ customer.state }}</div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="small text-muted">RTO Password</div>
+                    <div class="fw-semibold">{{ customer.rto_password|default:"—" }}</div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="small text-muted">Base Price</div>
+                    <div class="fw-semibold">₹{{ customer.base_price }}</div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="small text-muted">Discount</div>
+                    <div class="fw-semibold">{{ customer.discount }}% (-₹{{ customer.discount_amount }})</div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="small text-muted">Final Amount</div>
+                    <div class="fw-bold text-success">₹{{ customer.final_amount }}</div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="small text-muted">Cashfree Order ID</div>
+                    <div class="small fw-semibold">{{ customer.cashfree_order_id|default:"—" }}</div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="small text-muted">Cashfree Payment ID</div>
+                    <div class="small fw-semibold">{{ customer.cashfree_payment_id|default:"—" }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card p-4">
+            <h6 class="fw-bold mb-3">Update Payment Status</h6>
+            <form method="post" class="d-flex gap-2 align-items-center">
+                {% csrf_token %}
+                <select name="payment_status" class="form-select w-auto">
+                    <option value="pending" {% if customer.payment_status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="paid" {% if customer.payment_status == 'paid' %}selected{% endif %}>Paid</option>
+                    <option value="verified" {% if customer.payment_status == 'verified' %}selected{% endif %}>Verified</option>
+                </select>
+                <button type="submit" class="btn btn-primary">Save Status</button>
+                <a href="{% url 'customers_list' %}" class="btn btn-outline-secondary ms-auto">Back to List</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

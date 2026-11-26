@@ -1,0 +1,56 @@
+{% extends 'admin_base.html' %}
+
+{% block page_title %}Portal Settings{% endblock %}
+{% block page_subtitle %}Configure pricing, default discount (%), UPI QR, and Cashfree status{% endblock %}
+
+{% block admin_content %}
+<div class="row g-4">
+    <div class="col-md-7">
+        <div class="card p-4">
+            <h5 class="fw-bold mb-3">Pricing &amp; QR Settings</h5>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Default Price (₹)</label>
+                    {{ form.default_price }}
+                    {% for e in form.default_price.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Default Discount (%)</label>
+                    {{ form.default_discount_percent }}
+                    {% for e in form.default_discount_percent.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Fallback UPI ID (Optional)</label>
+                    {{ form.upi_id }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Fallback Payment QR Image (Optional)</label>
+                    {{ form.payment_qr }}
+                </div>
+                <button type="submit" class="btn btn-primary">Save Settings</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="card p-4">
+            <h5 class="fw-bold mb-3">Cashfree Gateway Status</h5>
+            {% if cashfree_configured %}
+                <div class="alert alert-success">
+                    <strong>Connected</strong> ({{ cashfree_env|title }} mode)
+                </div>
+            {% else %}
+                <div class="alert alert-warning">
+                    <strong>Credentials Missing</strong><br>
+                    Add <code>CASHFREE_APP_ID</code>, <code>CASHFREE_SECRET_KEY</code>, and <code>CASHFREE_ENV</code> to your <code>.env</code> file.
+                </div>
+            {% endif %}
+            <p class="small text-muted mb-0">
+                Webhook URL to configure in Cashfree Dashboard:<br>
+                <code>{{ request.scheme }}://{{ request.get_host }}{% url 'cashfree_webhook' %}</code>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
